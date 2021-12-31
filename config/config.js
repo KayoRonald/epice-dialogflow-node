@@ -3,4 +3,4 @@ module.exports = {
   port: 507,
   user: process.env['EMAIL'],
   pass: process.env['SENHA']
-}
+};
