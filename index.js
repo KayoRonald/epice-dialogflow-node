@@ -258,10 +258,8 @@ app.post("/dialogflow", (req, res) => {
     fetch(y)
       .then(res => res.json())
       .then(json => {
-        console.log(json.length)
-        console.log(json[0].name)
         for (i = 0; i < 8; i++) {
-          array.push(json[i].name[0].toLocaleUpperCase()+json[i].name.substring(1, json[i].name.length).toLowerCase())
+          array.push(json[i].name[0].toLocaleUpperCase() + json[i].name.substring(1, json[i].name.length).toLowerCase())
         }
         return res.json({
           fulfillmentText: array.join([separador = ', '])
@@ -270,6 +268,7 @@ app.post("/dialogflow", (req, res) => {
         console.log(error)
       })
   }
+  
   switch (intername) {
     case 'subscription':
       createUSerMysql()
