@@ -2,10 +2,10 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const axios = require("axios");
-const nodemailer = require("nodemailer")
+const nodemailer = require("nodemailer");
 const smpt = require('./config/config')
+const fetch = require('cross-fetch');
 
-// Criando a conexão com gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   host: smpt.host,
@@ -64,10 +64,10 @@ app.post("/dialogflow", (req, res) => {
           })
         } catch (error) {
           console.log(error.status)
-          if(error.message === 'Request failed with status code 401'){
+          if (error.message === 'Request failed with status code 401') {
             return res.json({
-            fulfillmentText: 'Este email não está cadastrado em nosso banco de dados',
-          })
+              fulfillmentText: 'Este email não está cadastrado em nosso banco de dados',
+            })
           }
           return res.json({
             fulfillmentText: 'Ocorreu um erro em nossa api :(',
@@ -119,7 +119,7 @@ app.post("/dialogflow", (req, res) => {
         })
       } catch (error) {
         console.log(error)
-        if (error.code === 'ER_DUP_ENTRY') {
+        if (error.message === 'Request failed with status code 406') {
           return res.json({
             fulfillmentText: `${name.split(' ')[0]}, esté email já foi cadastro`,
           })
@@ -181,6 +181,95 @@ app.post("/dialogflow", (req, res) => {
       }
     })();
   }
+  function updateName() {
+    const name = req.body.queryResult.parameters.name;
+    const email = req.body.queryResult.parameters.email;
+    const data = {
+      name,
+      email
+    }
+    async function run(data) {
+      try {
+        await axios.post('https://epice-app.vercel.app/api/updateUser/name', data)
+        return res.json({
+          fulfillmentMessages: [
+            {
+              payload: {
+                richContent: [
+                  [
+                    {
+                      "rawUrl": "https://i.ibb.co/MRNF39K/57137-success-tick.gif",
+                      "type": "image"
+                    },
+                    {
+                      "type": "button",
+                      "text": `sua alteração foi feita com sucesso! O seu nome já foi modificado em nosso banco de dados`,
+                      "icon": {
+                        "color": "#fd6584",
+                        "type": "check_circle"
+                      }
+                    }
+                  ]
+                ]
+              }
+            }
+          ]
+        })
+      } catch (error) {
+        if (error.message === 'Request failed with status code 401') {
+          return res.json({
+            fulfillmentText: 'Este email não está cadastrado em nosso banco de dados',
+          })
+        }
+        return res.json({
+          fulfillmentText: 'Ops.. meu serviço está em manutenção :('
+        })
+      }
+    } run(data)
+  }
+  function updateCurso() {
+    const curso = req.body.queryResult.parameters.curso;
+    const email = req.body.queryResult.parameters.email;
+    const data = {
+      curso,
+      email
+    }
+    async function run(data) {
+      try {
+        await axios.post('https://epice-app.vercel.app/api/updateUser/curso', data)
+        return res.json({
+          fulfillmentText: `Alteração feita com sucesso!`
+        })
+      } catch (error) {
+        if (error.message === 'Request failed with status code 401') {
+          return res.json({
+            fulfillmentText: 'Este email não está cadastrado em nosso banco de dados',
+          })
+        }
+        return res.json({
+          fulfillmentText: 'Ops.. meu serviço está em manutenção :('
+        })
+      }
+    } run(data)
+  }
+  function sobreGet() {
+    var array = []
+    var y = 'https://epice-app.vercel.app/api/team'
+    fetch(y)
+      .then(res => res.json())
+      .then(json => {
+        console.log(json.length)
+        console.log(json[0].name)
+        for (i = 0; i < 8; i++) {
+          array.push(json[i].name[0].toLocaleUpperCase()+json[i].name.substring(1, json[i].name.length).toLowerCase())
+        }
+        return res.json({
+          fulfillmentText: array.join([separador = ', '])
+        })
+      }).catch((error) => {
+        console.log(error)
+      })
+  }
   switch (intername) {
     case 'subscription':
       createUSerMysql()
@@ -190,6 +279,15 @@ app.post("/dialogflow", (req, res) => {
       break;
     case 'enviar.email.bot':
       sendEmail()
+      break;
+    case 'update.name':
+      updateName()
+      break;
+    case 'update.curso':
+      updateCurso()
+      break;
+    case 'sobre':
+      sobreGet()
       break;
   }
 });
